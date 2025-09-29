@@ -19,6 +19,7 @@ export default function StoriesPage() {
   const [uploading, setUploading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // Tambahkan state untuk menyimpan file yang dipilih
   const [alert, setAlert] = useState({ type: '', message: '' });
   
   const fileInputRef = useRef(null);
@@ -197,6 +198,9 @@ export default function StoriesPage() {
       return;
     }
     
+    // Store the selected file in state
+    setSelectedFile(file);
+    
     // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -249,9 +253,8 @@ export default function StoriesPage() {
     }
     
     try {
-      // Get file from input
-      const file = fileInputRef.current.files[0];
-      if (!file) {
+      // Use the selected file from state instead of trying to access the input directly
+      if (!selectedFile) {
         showAlert('error', 'No file selected');
         return;
       }
@@ -260,7 +263,7 @@ export default function StoriesPage() {
       
       // Upload to catbox.moe
       showAlert('info', 'Uploading story...');
-      const mediaUrl = await uploadToCatbox(file);
+      const mediaUrl = await uploadToCatbox(selectedFile);
       
       console.log('File uploaded successfully, URL:', mediaUrl);
       
@@ -285,7 +288,10 @@ export default function StoriesPage() {
       showAlert('success', 'Story uploaded successfully');
       setFilePreview(null);
       setFileType(null);
-      fileInputRef.current.value = '';
+      setSelectedFile(null); // Reset selected file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error('Error uploading story:', error);
       showAlert('error', `Failed to upload story: ${error.message}`);
@@ -554,7 +560,10 @@ export default function StoriesPage() {
                   onClick={() => {
                     setFilePreview(null);
                     setFileType(null);
-                    fileInputRef.current.value = '';
+                    setSelectedFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
                   }}
                   className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
                 >
@@ -569,7 +578,10 @@ export default function StoriesPage() {
                   onClick={() => {
                     setFilePreview(null);
                     setFileType(null);
-                    fileInputRef.current.value = '';
+                    setSelectedFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
                   }}
                   className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
                 >
