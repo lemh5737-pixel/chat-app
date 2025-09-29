@@ -140,6 +140,36 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Mark messages as read when user opens the chat
+  const markMessagesAsRead = async () => {
+    if (!user || !recipient) return;
+    
+    try {
+      const chatId = [user.username, recipient.username].sort().join('_');
+      const messagesRef = ref(database, `chats/${chatId}/messages`);
+      const snapshot = await get(messagesRef);
+      
+      if (snapshot.exists()) {
+        const messagesData = snapshot.val();
+        const updates = {};
+        
+        Object.keys(messagesData).forEach(messageId => {
+          const message = messagesData[messageId];
+          // Only mark messages from the other user that are not deleted and not already read
+          if (message.sender === recipient.username && !message.deleted && message.status !== 'read') {
+            updates[`chats/${chatId}/messages/${messageId}/status`] = 'read';
+          }
+        });
+        
+        if (Object.keys(updates).length > 0) {
+          await update(ref(database), updates);
+        }
+      }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
   // Set up Firebase listeners
   useEffect(() => {
     if (!isClient || !user || !recipient) return;
@@ -169,6 +199,9 @@ export default function ChatPage() {
         });
         
         setMessages(messageList);
+        
+        // Mark messages as read when user opens the chat
+        markMessagesAsRead();
       } else {
         setMessages([]);
       }
@@ -190,10 +223,15 @@ export default function ChatPage() {
     try {
       const chatHistoryRef = ref(database, `users/${user.username}/chatHistory/${recipient.phoneNumber}`);
       
+      // Check if the message is deleted
+      const displayText = messageText.includes("∅ pesan ini telah dihapus oleh pengguna") 
+        ? "Pesan telah dihapus" 
+        : messageText;
+      
       await update(chatHistoryRef, {
         username: recipient.username,
         phoneNumber: recipient.phoneNumber,
-        lastMessage: messageText,
+        lastMessage: displayText,
         lastMessageTime: Date.now()
       });
     } catch (error) {
@@ -259,7 +297,7 @@ export default function ChatPage() {
     }
 
     if (newMessage.length > VIRTEX_LENGTH) {
-      showAlert('error', `Message too long! Maximum ${VIRTEX_LENGTH} characters allowed to prevent spam.`);
+      showAlert('error', `Message too long! Maximum ${VIRTEXT_LENGTH} characters allowed to prevent spam.`);
       return;
     }
 
@@ -269,11 +307,20 @@ export default function ChatPage() {
       const messagesRef = ref(database, `chats/${chatId}/messages`);
       const newMessageRef = push(messagesRef);
 
-      await set(newMessageRef, {
+      // Create message with initial status
+      const messageData = {
         sender: user.username,
         text: newMessage,
-        timestamp: serverTimestamp()
-      });
+        timestamp: serverTimestamp(),
+        status: 'pending', // pending, sent, delivered, read
+        deleted: false,
+        deletedBy: null
+      };
+
+      await set(newMessageRef, messageData);
+
+      // Update status to 'sent' after successfully saved
+      await update(newMessageRef, { status: 'sent' });
 
       // Update chat history
       await updateChatHistory(newMessage);
@@ -309,13 +356,33 @@ export default function ChatPage() {
     showConfirm('Are you sure you want to clear all messages?', () => {
       const chatId = [user.username, recipient.username].sort().join('_');
       const messagesRef = ref(database, `chats/${chatId}/messages`);
-      set(messagesRef, null)
-        .then(() => {
-          showAlert('success', "Messages cleared successfully");
-        })
-        .catch(error => {
-          showAlert('error', `Error clearing messages: ${error.message}`);
-        });
+      
+      // Instead of deleting all messages, mark them as deleted
+      get(messagesRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const updates = {};
+          const messages = snapshot.val();
+          
+          Object.keys(messages).forEach(messageId => {
+            updates[`${messageId}/deleted`] = true;
+            updates[`${messageId}/deletedBy`] = user.username;
+            updates[`${messageId}/text`] = "∅ pesan ini telah dihapus oleh pengguna";
+          });
+          
+          update(messagesRef, updates)
+            .then(() => {
+              showAlert('success', "Messages cleared successfully");
+            })
+            .catch(error => {
+              showAlert('error', `Error clearing messages: ${error.message}`);
+            });
+        } else {
+          showAlert('info', "No messages to clear");
+        }
+      }).catch(error => {
+        showAlert('error', `Error clearing messages: ${error.message}`);
+      });
+      
       setConfirmData(null);
     });
   };
@@ -324,7 +391,13 @@ export default function ChatPage() {
     showConfirm('Are you sure you want to delete this message?', () => {
       const chatId = [user.username, recipient.username].sort().join('_');
       const messageRef = ref(database, `chats/${chatId}/messages/${messageId}`);
-      remove(messageRef)
+      
+      // Update message to mark as deleted instead of removing it
+      update(messageRef, { 
+        deleted: true, 
+        deletedBy: user.username,
+        text: "∅ pesan ini telah dihapus oleh pengguna"
+      })
         .then(() => {
           showAlert('success', "Message deleted successfully");
         })
@@ -472,20 +545,53 @@ export default function ChatPage() {
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-bl-none'
                       } relative`}
                     >
-                      <div className="whitespace-pre-wrap break-words">{message.text}</div>
+                      <div className="whitespace-pre-wrap break-words">
+                        {message.deleted ? message.text : message.text}
+                      </div>
                       <div
-                        className={`text-xs mt-1 ${
+                        className={`text-xs mt-1 flex justify-between ${
                           message.sender === user.username
                             ? 'text-indigo-200'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}
                       >
-                        {formatTime(message.timestamp)}
+                        <span>{formatTime(message.timestamp)}</span>
+                        
+                        {/* Message status indicators */}
+                        {message.sender === user.username && (
+                          <div className="ml-2 flex items-center">
+                            {message.status === 'pending' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            )}
+                            {message.status === 'sent' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                            {message.status === 'delivered' && (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                            {message.status === 'read' && (
+                              <div className="flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       
-                      {/* Message Actions */}
-                      <div className="absolute -bottom-5 right-0 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
-                        {message.sender === user.username && (
+                      {/* Message Actions - only show for own messages and not deleted */}
+                      {!message.deleted && message.sender === user.username && (
+                        <div className="absolute -bottom-5 right-0 flex space-x-2 opacity-0 hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => deleteMessage(message.id)}
                             className="text-xs bg-gray-500 text-white px-2 py-1 rounded-full hover:bg-gray-600 transition"
@@ -493,8 +599,8 @@ export default function ChatPage() {
                           >
                             Delete
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
