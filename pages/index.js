@@ -19,7 +19,6 @@ export default function Home() {
   const [chatHistory, setChatHistory] = useState([]);
   const [savedContacts, setSavedContacts] = useState([]);
   const [allContacts, setAllContacts] = useState([]); // Combined list of saved contacts and people who messaged user
-  const [stories, setStories] = useState([]); // For stories section
 
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [confirmData, setConfirmData] = useState(null);
@@ -131,56 +130,6 @@ export default function Home() {
     
     return () => unsubscribeChatHistory();
   }, [isClient, user, database]);
-
-  // Get stories from saved contacts
-  useEffect(() => {
-    if (!isClient || !user || savedContacts.length === 0) return;
-    
-    const storiesRef = ref(database, 'stories');
-    const unsubscribeStories = onValue(storiesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const storiesData = snapshot.val();
-        const now = Date.now();
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-        
-        // Filter stories from saved contacts and not expired
-        const validStories = Object.keys(storiesData)
-          .filter(username => {
-            // Check if this user is in saved contacts
-            const isSavedContact = savedContacts.some(contact => contact.username === username);
-            if (!isSavedContact) return false;
-            
-            // Check if stories are not expired
-            const userStories = storiesData[username];
-            return Object.values(userStories).some(story => {
-              return (now - story.timestamp) < twentyFourHours;
-            });
-          })
-          .map(username => {
-            const userStories = storiesData[username];
-            const validUserStories = Object.keys(userStories)
-              .map(storyId => ({
-                id: storyId,
-                username,
-                ...userStories[storyId]
-              }))
-              .filter(story => (now - story.timestamp) < twentyFourHours)
-              .sort((a, b) => a.timestamp - b.timestamp);
-            
-            return {
-              username,
-              stories: validUserStories
-            };
-          });
-        
-        setStories(validStories);
-      } else {
-        setStories([]);
-      }
-    });
-    
-    return () => unsubscribeStories();
-  }, [isClient, user, savedContacts, database]);
 
   // Combine saved contacts with people who have messaged the user
   useEffect(() => {
@@ -473,76 +422,6 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl pb-20">
-        {/* Stories Section */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Stories</h2>
-            <button
-              onClick={() => router.push('/stories')}
-              className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
-            >
-              See All
-            </button>
-          </div>
-          
-          <div className="flex space-x-4 overflow-x-auto pb-2">
-            {/* Add Your Story */}
-            <div className="flex-shrink-0 cursor-pointer" onClick={() => router.push('/stories')}>
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div className="absolute bottom-0 right-0 bg-indigo-500 text-white rounded-full p-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-xs text-center mt-1 text-gray-600 dark:text-gray-400">Your Story</div>
-            </div>
-            
-            {/* Friends' Stories */}
-            {stories.map((userStories) => (
-              <div 
-                key={userStories.username} 
-                className="flex-shrink-0 cursor-pointer"
-                onClick={() => router.push(`/stories?username=${userStories.username}`)}
-              >
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 p-0.5">
-                    <div className="w-full h-full rounded-full bg-white dark:bg-gray-800 p-0.5">
-                      <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                        {userStories.stories[0]?.mediaType === 'image' ? (
-                          <img 
-                            src={userStories.stories[0]?.mediaUrl} 
-                            alt={`${userStories.username}'s story`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <video 
-                            src={userStories.stories[0]?.mediaUrl}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Unseen indicator */}
-                  {userStories.stories.some(story => !story.viewedBy || !story.viewedBy[user.username]) && (
-                    <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></div>
-                  )}
-                </div>
-                <div className="text-xs text-center mt-1 text-gray-600 dark:text-gray-400 truncate max-w-[4rem]">
-                  {userStories.username}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* User Info */}
         <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
