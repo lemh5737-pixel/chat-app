@@ -18,6 +18,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('contacts'); // 'contacts' or 'history'
   const [chatHistory, setChatHistory] = useState([]);
   const [savedContacts, setSavedContacts] = useState([]);
+  const [allContacts, setAllContacts] = useState([]); // Combined list of saved contacts and people who messaged user
 
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [confirmData, setConfirmData] = useState(null);
@@ -130,6 +131,50 @@ export default function Home() {
     return () => unsubscribeChatHistory();
   }, [isClient, user, database]);
 
+  // Combine saved contacts with people who have messaged the user
+  useEffect(() => {
+    if (!isClient || !user) return;
+    
+    // Create a map to avoid duplicates
+    const contactsMap = new Map();
+    
+    // Add saved contacts first
+    savedContacts.forEach(contact => {
+      contactsMap.set(contact.phoneNumber, {
+        ...contact,
+        isSaved: true
+      });
+    });
+    
+    // Add people from chat history
+    chatHistory.forEach(history => {
+      if (!contactsMap.has(history.phoneNumber)) {
+        contactsMap.set(history.phoneNumber, {
+          ...history,
+          isSaved: false,
+          fromHistory: true
+        });
+      }
+    });
+    
+    // Convert map back to array
+    const combinedContacts = Array.from(contactsMap.values());
+    
+    // Find full user data for each contact
+    const enrichedContacts = combinedContacts.map(contact => {
+      const fullUserData = users.find(u => u.phoneNumber === contact.phoneNumber);
+      return {
+        ...contact,
+        ...fullUserData,
+        // Keep the original username and phoneNumber from the contact
+        username: contact.username,
+        phoneNumber: contact.phoneNumber
+      };
+    }).filter(contact => contact); // Filter out any undefined contacts
+    
+    setAllContacts(enrichedContacts);
+  }, [savedContacts, chatHistory, users]);
+
   // Test database connection
   useEffect(() => {
     if (!isClient) return;
@@ -188,15 +233,23 @@ export default function Home() {
     
     try {
       const savedContactsRef = ref(database, `users/${user.username}/savedContacts`);
-      const newContactRef = push(savedContactsRef);
       
-      await set(newContactRef, {
-        username: contact.username,
-        phoneNumber: contact.phoneNumber,
-        savedAt: Date.now()
-      });
+      // Check if already saved
+      const alreadySaved = savedContacts.some(c => c.phoneNumber === contact.phoneNumber);
       
-      showAlert('success', `Contact saved successfully`);
+      if (!alreadySaved) {
+        const newContactRef = push(savedContactsRef);
+        
+        await set(newContactRef, {
+          username: contact.username,
+          phoneNumber: contact.phoneNumber,
+          savedAt: Date.now()
+        });
+        
+        showAlert('success', `Contact saved successfully`);
+      } else {
+        showAlert('warning', 'Contact already saved');
+      }
     } catch (error) {
       console.error("Error saving contact:", error);
       showAlert('error', `Error saving contact: ${error.message}`);
@@ -414,7 +467,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
                   <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    Contacts ({users.length})
+                    Contacts ({allContacts.length})
                   </h2>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     {savedContacts.length} saved
@@ -422,7 +475,7 @@ export default function Home() {
                 </div>
                 
                 <div className="overflow-y-auto max-h-96">
-                  {users.length === 0 ? (
+                  {allContacts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -431,8 +484,8 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {users.map((contact) => (
-                        <div key={contact.username} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                      {allContacts.map((contact) => (
+                        <div key={contact.phoneNumber} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <div className="relative">
@@ -440,10 +493,21 @@ export default function Home() {
                                   {contact.username.charAt(0).toUpperCase()}
                                 </div>
                                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${contact.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                {/* Show indicator for auto-added contacts */}
+                                {contact.autoAdded && (
+                                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                    <span className="text-xs text-white">A</span>
+                                  </div>
+                                )}
                               </div>
                               <div>
                                 <h3 className="font-medium text-gray-900 dark:text-white">{contact.username}</h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{contact.phoneNumber}</p>
+                                {contact.lastMessage && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                    {contact.lastMessage}
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <div className="flex space-x-2">
