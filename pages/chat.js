@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { ref, onValue, serverTimestamp, set, remove, update, get } from 'firebase/database';
+import { ref, onValue, serverTimestamp, set, remove, update, get, push } from 'firebase/database';
 import { database } from '../lib/firebase';
 import { getUserByPhone, updateUserStatus } from '../lib/auth';
 import CustomAlert from '../components/CustomAlert';
@@ -201,7 +201,7 @@ export default function ChatPage() {
     }
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
 
     if (newMessage.trim() === '' || !user || !recipient) {
@@ -227,26 +227,28 @@ export default function ChatPage() {
       return;
     }
 
-    // Create chat room ID (sorted usernames to ensure same ID for both users)
-    const chatId = [user.username, recipient.username].sort().join('_');
-    const messagesRef = ref(database, `chats/${chatId}/messages`);
-    const newMessageRef = push(messagesRef);
+    try {
+      // Create chat room ID (sorted usernames to ensure same ID for both users)
+      const chatId = [user.username, recipient.username].sort().join('_');
+      const messagesRef = ref(database, `chats/${chatId}/messages`);
+      const newMessageRef = push(messagesRef);
 
-    set(newMessageRef, {
-      sender: user.username,
-      text: newMessage,
-      timestamp: serverTimestamp()
-    }).then(() => {
+      await set(newMessageRef, {
+        sender: user.username,
+        text: newMessage,
+        timestamp: serverTimestamp()
+      });
+
       // Update chat history
-      updateChatHistory(newMessage);
+      await updateChatHistory(newMessage);
       
       setNewMessage('');
       setLastMessageTime(now);
       setCooldownTime(COOLDOWN_SECONDS);
-    }).catch(error => {
+    } catch (error) {
       console.error("Error sending message:", error);
       showAlert('error', `Error sending message: ${error.message}`);
-    });
+    }
   };
 
   const handleMessageChange = (e) => {
