@@ -313,7 +313,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 font-sans flex flex-col">
       {/* Alert Component */}
       <CustomAlert
         type={alert.type}
@@ -368,7 +368,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
+      <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl pb-20">
         {/* User Info */}
         <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
@@ -381,31 +381,6 @@ export default function Home() {
                 <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg font-medium">
                   {user.phoneNumber}
                 </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 md:mt-0">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setActiveTab('contacts')}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    activeTab === 'contacts'
-                      ? 'bg-indigo-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Contacts
-                </button>
-                <button
-                  onClick={() => setActiveTab('history')}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    activeTab === 'history'
-                      ? 'bg-indigo-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  History
-                </button>
               </div>
             </div>
           </div>
@@ -431,137 +406,140 @@ export default function Home() {
           </div>
         </div>
 
-        {activeTab === 'contacts' ? (
-          <>
-            {/* Contacts List */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-6">
-              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                  Contacts ({users.length})
-                </h2>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {savedContacts.length} saved
+        {/* Tab Content */}
+        <div className="mb-16">
+          {activeTab === 'contacts' ? (
+            <>
+              {/* Contacts List */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                    Contacts ({users.length})
+                  </h2>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {savedContacts.length} saved
+                  </div>
+                </div>
+                
+                <div className="overflow-y-auto max-h-96">
+                  {users.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <p className="text-center">No contacts found</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {users.map((contact) => (
+                        <div key={contact.username} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="relative">
+                                <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
+                                  {contact.username.charAt(0).toUpperCase()}
+                                </div>
+                                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${contact.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                              </div>
+                              <div>
+                                <h3 className="font-medium text-gray-900 dark:text-white">{contact.username}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{contact.phoneNumber}</p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              {isContactSaved(contact.phoneNumber) ? (
+                                <button
+                                  onClick={() => removeSavedContact(
+                                    savedContacts.find(c => c.phoneNumber === contact.phoneNumber)?.id
+                                  )}
+                                  className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
+                                  title="Remove contact"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => saveContact(contact)}
+                                  className="text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition"
+                                  title="Save contact"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                  </svg>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => router.push(`/chat?recipientPhone=${contact.phoneNumber}`)}
+                                className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
+                              >
+                                Chat
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              
-              <div className="overflow-y-auto max-h-96">
-                {users.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p className="text-center">No contacts found</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {users.map((contact) => (
-                      <div key={contact.username} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="relative">
+            </>
+          ) : (
+            <>
+              {/* Chat History */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                  <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                    Chat History ({chatHistory.length})
+                  </h2>
+                </div>
+                
+                <div className="overflow-y-auto max-h-96">
+                  {chatHistory.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-center">No chat history found</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {chatHistory.map((history) => (
+                        <div 
+                          key={history.id} 
+                          className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition cursor-pointer"
+                          onClick={() => openChatFromHistory(history)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
                               <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
-                                {contact.username.charAt(0).toUpperCase()}
+                                {history.username.charAt(0).toUpperCase()}
                               </div>
-                              <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${contact.status === 'online' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                              <div>
+                                <h3 className="font-medium text-gray-900 dark:text-white">{history.username}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{history.phoneNumber}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{history.lastMessage}</p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="font-medium text-gray-900 dark:text-white">{contact.username}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{contact.phoneNumber}</p>
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            {isContactSaved(contact.phoneNumber) ? (
-                              <button
-                                onClick={() => removeSavedContact(
-                                  savedContacts.find(c => c.phoneNumber === contact.phoneNumber)?.id
-                                )}
-                                className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
-                                title="Remove contact"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => saveContact(contact)}
-                                className="text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition"
-                                title="Save contact"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                </svg>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => router.push(`/chat?recipientPhone=${contact.phoneNumber}`)}
-                              className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
-                            >
-                              Chat
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Chat History */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-6">
-              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-                  Chat History ({chatHistory.length})
-                </h2>
-              </div>
-              
-              <div className="overflow-y-auto max-h-96">
-                {chatHistory.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-center">No chat history found</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {chatHistory.map((history) => (
-                      <div 
-                        key={history.id} 
-                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition cursor-pointer"
-                        onClick={() => openChatFromHistory(history)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
-                              {history.username.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-gray-900 dark:text-white">{history.username}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{history.phoneNumber}</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{history.lastMessage}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {new Date(history.lastMessageTime).toLocaleDateString()}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {new Date(history.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <div className="text-right">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {new Date(history.lastMessageTime).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(history.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
 
         {/* Info Panels */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -636,6 +614,41 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-around">
+            <button
+              onClick={() => setActiveTab('contacts')}
+              className={`flex flex-col items-center justify-center py-3 px-6 ${
+                activeTab === 'contacts'
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className="text-xs mt-1">Contacts</span>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex flex-col items-center justify-center py-3 px-6 ${
+                activeTab === 'history'
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs mt-1">History</span>
+            </button>
+          </div>
+        </div>
+      </nav>
 
       {/* Footer */}
       <footer className="mt-8 py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
