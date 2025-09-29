@@ -19,7 +19,8 @@ export default function StoriesPage() {
   const [uploading, setUploading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null); // Store the selected file
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [alert, setAlert] = useState({ type: '', message: '' });
   
   const fileInputRef = useRef(null);
@@ -210,55 +211,116 @@ export default function StoriesPage() {
     reader.readAsDataURL(file);
   };
 
-  const uploadToCatbox = async (file) => {
-    setUploading(true);
-    
-    try {
+  // Alternative upload method using FileReader and base64
+  const uploadToCatboxAlternative = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = async function() {
+        try {
+          const base64data = reader.result.split(',')[1]; // Get base64 part
+          
+          // Create a blob from the base64 data
+          const byteCharacters = atob(base64data);
+          const byteNumbers = new Array(byteCharacters.length);
+          
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: file.type });
+          
+          // Create FormData with the blob
+          const formData = new FormData();
+          formData.append('fileToUpload', blob, file.name);
+          formData.append('reqtype', 'fileupload');
+          
+          console.log('Uploading file using alternative method...');
+          
+          const response = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: formData,
+            mode: 'cors', // Explicitly set CORS mode
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const url = await response.text();
+          console.log('Upload response:', url);
+          
+          // Check if the response is a valid URL
+          if (!url || !url.startsWith('http')) {
+            throw new Error('Invalid response from server');
+          }
+          
+          resolve(url);
+        } catch (error) {
+          console.error('Error in alternative upload:', error);
+          reject(error);
+        }
+      };
+      
+      reader.onerror = function() {
+        reject(new Error('Failed to read file'));
+      };
+      
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Direct upload method
+  const uploadToCatboxDirect = async (file) => {
+    return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('fileToUpload', file);
       formData.append('reqtype', 'fileupload');
       
-      console.log('Uploading file to catbox.moe...');
+      console.log('Uploading file using direct method...');
       
-      // Add timeout to the fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
+      const xhr = new XMLHttpRequest();
       
-      const response = await fetch('https://catbox.moe/user/api.php', {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal
+      // Track upload progress
+      xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          setUploadProgress(percentComplete);
+          console.log(`Upload progress: ${percentComplete}%`);
+        }
       });
       
-      clearTimeout(timeoutId);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            const response = xhr.responseText;
+            console.log('Upload response:', response);
+            
+            // Check if the response is a valid URL
+            if (!response || !response.startsWith('http')) {
+              reject(new Error('Invalid response from server'));
+            } else {
+              resolve(response);
+            }
+          } else {
+            reject(new Error(`HTTP error! status: ${xhr.status}`));
+          }
+        }
+      };
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      xhr.onerror = function() {
+        reject(new Error('Network error occurred'));
+      };
       
-      const url = await response.text();
-      console.log('Upload response:', url);
+      xhr.ontimeout = function() {
+        reject(new Error('Request timed out'));
+      };
       
-      // Check if the response is a valid URL
-      if (!url || !url.startsWith('http')) {
-        throw new Error('Invalid response from server');
-      }
-      
-      return url;
-    } catch (error) {
-      console.error('Error uploading to catbox:', error);
-      
-      // Provide more specific error messages
-      if (error.name === 'AbortError') {
-        throw new Error('Upload timed out. Please try again with a smaller file or check your internet connection.');
-      } else if (error.message.includes('Failed to fetch')) {
-        throw new Error('Network error. Please check your internet connection and try again.');
-      } else {
-        throw error;
-      }
-    } finally {
-      setUploading(false);
-    }
+      xhr.open('POST', 'https://catbox.moe/user/api.php', true);
+      xhr.timeout = 60000; // 60 seconds timeout
+      xhr.send(formData);
+    });
   };
 
   const handleUploadStory = async () => {
@@ -269,10 +331,26 @@ export default function StoriesPage() {
     
     try {
       console.log('Starting upload process...');
+      setUploading(true);
+      setUploadProgress(0);
       
-      // Upload to catbox.moe
-      showAlert('info', 'Uploading story...');
-      const mediaUrl = await uploadToCatbox(selectedFile);
+      // Try direct upload method first
+      let mediaUrl;
+      try {
+        showAlert('info', 'Uploading story...');
+        mediaUrl = await uploadToCatboxDirect(selectedFile);
+      } catch (directError) {
+        console.error('Direct upload failed:', directError);
+        
+        // If direct upload fails, try alternative method
+        try {
+          showAlert('info', 'Trying alternative upload method...');
+          mediaUrl = await uploadToCatboxAlternative(selectedFile);
+        } catch (altError) {
+          console.error('Alternative upload failed:', altError);
+          throw new Error('All upload methods failed. Please try again later.');
+        }
+      }
       
       console.log('File uploaded successfully, URL:', mediaUrl);
       
@@ -298,12 +376,15 @@ export default function StoriesPage() {
       setFilePreview(null);
       setFileType(null);
       setSelectedFile(null);
+      setUploadProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (error) {
       console.error('Error uploading story:', error);
       showAlert('error', `Failed to upload story: ${error.message}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -570,6 +651,7 @@ export default function StoriesPage() {
                     setFilePreview(null);
                     setFileType(null);
                     setSelectedFile(null);
+                    setUploadProgress(0);
                     if (fileInputRef.current) {
                       fileInputRef.current.value = '';
                     }
@@ -582,12 +664,29 @@ export default function StoriesPage() {
                 </button>
               </div>
               
+              {/* Upload Progress */}
+              {uploading && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    <span>Uploading...</span>
+                    <span>{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-indigo-600 h-2.5 rounded-full" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex justify-end mt-4 space-x-2">
                 <button
                   onClick={() => {
                     setFilePreview(null);
                     setFileType(null);
                     setSelectedFile(null);
+                    setUploadProgress(0);
                     if (fileInputRef.current) {
                       fileInputRef.current.value = '';
                     }
