@@ -201,6 +201,42 @@ export default function ChatPage() {
     }
   };
 
+  // Auto-add sender to recipient's contacts
+  const autoAddToContacts = async () => {
+    if (!user || !recipient) return;
+    
+    try {
+      // Check if recipient already has sender in their contacts
+      const recipientContactsRef = ref(database, `users/${recipient.username}/savedContacts`);
+      const snapshot = await get(recipientContactsRef);
+      
+      let alreadyInContacts = false;
+      if (snapshot.exists()) {
+        const contactsData = snapshot.val();
+        for (const contactId in contactsData) {
+          if (contactsData[contactId].phoneNumber === user.phoneNumber) {
+            alreadyInContacts = true;
+            break;
+          }
+        }
+      }
+      
+      // If not already in contacts, add them
+      if (!alreadyInContacts) {
+        const newContactRef = push(recipientContactsRef);
+        await set(newContactRef, {
+          username: user.username,
+          phoneNumber: user.phoneNumber,
+          savedAt: Date.now(),
+          autoAdded: true // Mark as auto-added
+        });
+        console.log(`Auto-added ${user.username} to ${recipient.username}'s contacts`);
+      }
+    } catch (error) {
+      console.error("Error auto-adding to contacts:", error);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
@@ -241,6 +277,9 @@ export default function ChatPage() {
 
       // Update chat history
       await updateChatHistory(newMessage);
+      
+      // Auto-add sender to recipient's contacts
+      await autoAddToContacts();
       
       setNewMessage('');
       setLastMessageTime(now);
