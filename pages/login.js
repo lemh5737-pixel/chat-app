@@ -9,38 +9,58 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '' });
+  const [debugInfo, setDebugInfo] = useState('');
   const router = useRouter();
 
   const showAlert = (type, message) => {
+    console.log("Showing alert:", type, message);
     setAlert({ type, message });
+  };
+
+  const addDebugInfo = (info) => {
+    setDebugInfo(prev => prev + '\n' + info);
+    console.log(info);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setDebugInfo('');
     
     try {
+      addDebugInfo(`Starting ${isLogin ? 'login' : 'registration'} process...`);
+      addDebugInfo(`Username: ${username}`);
+      
       let result;
       if (isLogin) {
+        addDebugInfo("Calling loginUser function...");
         result = await loginUser(username, password);
       } else {
+        addDebugInfo("Calling registerUser function...");
         result = await registerUser(username, password);
       }
       
+      addDebugInfo(`Result received: ${JSON.stringify(result)}`);
+      
       if (result.success) {
         showAlert('success', result.message);
+        addDebugInfo("Saving user data to localStorage...");
         
         // Save user data to localStorage
         localStorage.setItem('chatUser', JSON.stringify(result.user));
         
+        addDebugInfo("Redirecting to home page...");
         // Redirect to chat page
         setTimeout(() => {
           router.push('/');
         }, 1500);
       } else {
         showAlert('error', result.message);
+        addDebugInfo(`Error: ${result.message}`);
       }
     } catch (error) {
+      console.error("Submit error:", error);
+      addDebugInfo(`Catch error: ${error.message}`);
       showAlert('error', 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -149,6 +169,14 @@ export default function LoginPage() {
                 </button>
               </p>
             </div>
+            
+            {/* Debug Info Panel */}
+            {debugInfo && (
+              <div className="mt-6 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-300 max-h-40 overflow-y-auto">
+                <div className="font-bold mb-1">Debug Info:</div>
+                <pre>{debugInfo}</pre>
+              </div>
+            )}
           </div>
         </div>
         
@@ -158,4 +186,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+                  }
