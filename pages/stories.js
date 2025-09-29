@@ -214,16 +214,25 @@ export default function StoriesPage() {
       formData.append('fileToUpload', file);
       formData.append('reqtype', 'fileupload');
       
+      console.log('Uploading file to catbox.moe...');
+      
       const response = await fetch('https://catbox.moe/user/api.php', {
         method: 'POST',
         body: formData
       });
       
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const url = await response.text();
+      console.log('Upload response:', url);
+      
+      // Check if the response is a valid URL
+      if (!url || !url.startsWith('http')) {
+        throw new Error('Invalid response from server');
+      }
+      
       return url;
     } catch (error) {
       console.error('Error uploading to catbox:', error);
@@ -242,21 +251,36 @@ export default function StoriesPage() {
     try {
       // Get file from input
       const file = fileInputRef.current.files[0];
+      if (!file) {
+        showAlert('error', 'No file selected');
+        return;
+      }
+      
+      console.log('Starting upload process...');
       
       // Upload to catbox.moe
       showAlert('info', 'Uploading story...');
       const mediaUrl = await uploadToCatbox(file);
       
+      console.log('File uploaded successfully, URL:', mediaUrl);
+      
       // Save to Firebase
+      console.log('Saving to Firebase...');
       const storiesRef = ref(database, `stories/${user.username}`);
       const newStoryRef = push(storiesRef);
       
-      await set(newStoryRef, {
+      const storyData = {
         mediaUrl,
         mediaType: fileType,
         timestamp: Date.now(),
         viewedBy: {}
-      });
+      };
+      
+      console.log('Story data:', storyData);
+      
+      await set(newStoryRef, storyData);
+      
+      console.log('Story saved to Firebase successfully');
       
       showAlert('success', 'Story uploaded successfully');
       setFilePreview(null);
@@ -264,7 +288,7 @@ export default function StoriesPage() {
       fileInputRef.current.value = '';
     } catch (error) {
       console.error('Error uploading story:', error);
-      showAlert('error', 'Failed to upload story');
+      showAlert('error', `Failed to upload story: ${error.message}`);
     }
   };
 
@@ -616,7 +640,6 @@ export default function StoriesPage() {
                         className="w-full h-full object-cover"
                       />
                     )}
-                    <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                   </div>
                   
                   <div className="absolute top-2 right-2">
@@ -675,7 +698,6 @@ export default function StoriesPage() {
                           className="w-full h-full object-cover"
                         />
                       )}
-                      <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                     </div>
                     
                     <div className="absolute top-2 left-2">
