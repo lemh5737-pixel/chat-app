@@ -211,78 +211,30 @@ export default function StoriesPage() {
     reader.readAsDataURL(file);
   };
 
-  // Alternative upload method using FileReader and base64
-  const uploadToCatboxAlternative = async (file) => {
+  // Upload to Catbox using FormData approach
+  const uploadToCatbox = async (file) => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      // Get file extension
+      const fileName = file.name;
+      const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
       
-      reader.onload = async function() {
-        try {
-          const base64data = reader.result.split(',')[1]; // Get base64 part
-          
-          // Create a blob from the base64 data
-          const byteCharacters = atob(base64data);
-          const byteNumbers = new Array(byteCharacters.length);
-          
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: file.type });
-          
-          // Create FormData with the blob
-          const formData = new FormData();
-          formData.append('fileToUpload', blob, file.name);
-          formData.append('reqtype', 'fileupload');
-          
-          console.log('Uploading file using alternative method...');
-          
-          const response = await fetch('https://catbox.moe/user/api.php', {
-            method: 'POST',
-            body: formData,
-            mode: 'cors', // Explicitly set CORS mode
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const url = await response.text();
-          console.log('Upload response:', url);
-          
-          // Check if the response is a valid URL
-          if (!url || !url.startsWith('http')) {
-            throw new Error('Invalid response from server');
-          }
-          
-          resolve(url);
-        } catch (error) {
-          console.error('Error in alternative upload:', error);
-          reject(error);
-        }
-      };
+      // Check if extension is supported
+      const supportedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.zip', '.js', '.mp4', '.webm'];
+      if (!supportedExtensions.includes(ext)) {
+        reject(new Error(`File type ${ext} is not supported`));
+        return;
+      }
       
-      reader.onerror = function() {
-        reject(new Error('Failed to read file'));
-      };
+      console.log('Uploading file with extension:', ext);
       
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Direct upload method
-  const uploadToCatboxDirect = async (file) => {
-    return new Promise((resolve, reject) => {
+      // Create FormData
       const formData = new FormData();
-      formData.append('fileToUpload', file);
       formData.append('reqtype', 'fileupload');
-      
-      console.log('Uploading file using direct method...');
-      
-      const xhr = new XMLHttpRequest();
+      formData.append('fileToUpload', file);
       
       // Track upload progress
+      const xhr = new XMLHttpRequest();
+      
       xhr.upload.addEventListener('progress', function(e) {
         if (e.lengthComputable) {
           const percentComplete = (e.loaded / e.total) * 100;
@@ -301,19 +253,23 @@ export default function StoriesPage() {
             if (!response || !response.startsWith('http')) {
               reject(new Error('Invalid response from server'));
             } else {
-              resolve(response);
+              resolve(response.trim());
             }
           } else {
+            console.error('Upload failed with status:', xhr.status);
+            console.error('Response:', xhr.responseText);
             reject(new Error(`HTTP error! status: ${xhr.status}`));
           }
         }
       };
       
       xhr.onerror = function() {
+        console.error('Network error occurred');
         reject(new Error('Network error occurred'));
       };
       
       xhr.ontimeout = function() {
+        console.error('Request timed out');
         reject(new Error('Request timed out'));
       };
       
@@ -334,23 +290,10 @@ export default function StoriesPage() {
       setUploading(true);
       setUploadProgress(0);
       
-      // Try direct upload method first
-      let mediaUrl;
-      try {
-        showAlert('info', 'Uploading story...');
-        mediaUrl = await uploadToCatboxDirect(selectedFile);
-      } catch (directError) {
-        console.error('Direct upload failed:', directError);
-        
-        // If direct upload fails, try alternative method
-        try {
-          showAlert('info', 'Trying alternative upload method...');
-          mediaUrl = await uploadToCatboxAlternative(selectedFile);
-        } catch (altError) {
-          console.error('Alternative upload failed:', altError);
-          throw new Error('All upload methods failed. Please try again later.');
-        }
-      }
+      showAlert('info', 'Uploading story...');
+      
+      // Upload to catbox.moe
+      const mediaUrl = await uploadToCatbox(selectedFile);
       
       console.log('File uploaded successfully, URL:', mediaUrl);
       
@@ -724,7 +667,9 @@ export default function StoriesPage() {
               >
                 Select Media
               </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Max file size: 10MB</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Supported formats: .jpg, .jpeg, .png, .gif, .mp4, .webm (Max 10MB)
+              </p>
             </div>
           )}
         </div>
