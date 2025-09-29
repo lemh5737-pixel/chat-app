@@ -18,7 +18,9 @@ export default function Home() {
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [databaseInfo, setDatabaseInfo] = useState(null);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'contacts'
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'contacts', or 'history'
+  const [chatHistory, setChatHistory] = useState([]);
+  const [savedContacts, setSavedContacts] = useState([]);
   const messagesEndRef = useRef(null);
 
   const [alert, setAlert] = useState({ type: '', message: '' });
@@ -92,6 +94,48 @@ export default function Home() {
     });
     
     return () => unsubscribeUsers();
+  }, [isClient, user, database]);
+
+  // Get saved contacts
+  useEffect(() => {
+    if (!isClient || !user) return;
+    
+    const savedContactsRef = ref(database, `users/${user.username}/savedContacts`);
+    const unsubscribeContacts = onValue(savedContactsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const contactsData = snapshot.val();
+        const contactsList = Object.keys(contactsData).map(contactId => ({
+          id: contactId,
+          ...contactsData[contactId]
+        }));
+        setSavedContacts(contactsList);
+      } else {
+        setSavedContacts([]);
+      }
+    });
+    
+    return () => unsubscribeContacts();
+  }, [isClient, user, database]);
+
+  // Get chat history
+  useEffect(() => {
+    if (!isClient || !user) return;
+    
+    const chatHistoryRef = ref(database, `users/${user.username}/chatHistory`);
+    const unsubscribeChatHistory = onValue(chatHistoryRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const historyData = snapshot.val();
+        const historyList = Object.keys(historyData).map(historyId => ({
+          id: historyId,
+          ...historyData[historyId]
+        })).sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+        setChatHistory(historyList);
+      } else {
+        setChatHistory([]);
+      }
+    });
+    
+    return () => unsubscribeChatHistory();
   }, [isClient, user, database]);
 
   // Test database connection
@@ -208,6 +252,86 @@ export default function Home() {
     }
   };
 
+  // Save contact
+  const saveContact = async (contact) => {
+    if (!user) return;
+    
+    try {
+      const savedContactsRef = ref(database, `users/${user.username}/savedContacts`);
+      const newContactRef = push(savedContactsRef);
+      
+      await set(newContactRef, {
+        username: contact.username,
+        phoneNumber: contact.phoneNumber,
+        savedAt: Date.now()
+      });
+      
+      showAlert('success', `Contact saved successfully`);
+    } catch (error) {
+      console.error("Error saving contact:", error);
+      showAlert('error', `Error saving contact: ${error.message}`);
+    }
+  };
+
+  // Remove saved contact
+  const removeSavedContact = async (contactId) => {
+    if (!user) return;
+    
+    showConfirm('Are you sure you want to remove this contact?', () => {
+      const contactRef = ref(database, `users/${user.username}/savedContacts/${contactId}`);
+      remove(contactRef)
+        .then(() => {
+          showAlert('success', "Contact removed successfully");
+        })
+        .catch(error => {
+          showAlert('error', `Error removing contact: ${error.message}`);
+        });
+      setConfirmData(null);
+    });
+  };
+
+  // Check if contact is saved
+  const isContactSaved = (phoneNumber) => {
+    return savedContacts.some(contact => contact.phoneNumber === phoneNumber);
+  };
+
+  // Update or add chat history
+  const updateChatHistory = async (contact, messageText) => {
+    if (!user) return;
+    
+    try {
+      const chatHistoryRef = ref(database, `users/${user.username}/chatHistory`);
+      
+      // Check if chat history already exists for this contact
+      const existingHistoryIndex = chatHistory.findIndex(
+        history => history.phoneNumber === contact.phoneNumber
+      );
+      
+      if (existingHistoryIndex !== -1) {
+        // Update existing chat history
+        const historyId = chatHistory[existingHistoryIndex].id;
+        const historyRef = ref(database, `users/${user.username}/chatHistory/${historyId}`);
+        
+        await update(historyRef, {
+          lastMessage: messageText,
+          lastMessageTime: Date.now()
+        });
+      } else {
+        // Add new chat history
+        const newHistoryRef = push(chatHistoryRef);
+        
+        await set(newHistoryRef, {
+          username: contact.username,
+          phoneNumber: contact.phoneNumber,
+          lastMessage: messageText,
+          lastMessageTime: Date.now()
+        });
+      }
+    } catch (error) {
+      console.error("Error updating chat history:", error);
+    }
+  };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
 
@@ -244,6 +368,9 @@ export default function Home() {
       text: newMessage,
       timestamp: serverTimestamp()
     }).then(() => {
+      // Update chat history
+      updateChatHistory(recipient, newMessage);
+      
       setNewMessage('');
       setLastMessageTime(now);
       setCooldownTime(COOLDOWN_SECONDS);
@@ -265,6 +392,18 @@ export default function Home() {
     if (!timestamp) return '';
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const today = new Date();
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else {
+      return date.toLocaleDateString();
+    }
   };
 
   const clearMessages = () => {
@@ -297,6 +436,12 @@ export default function Home() {
         });
       setConfirmData(null);
     });
+  };
+
+  const openChatFromHistory = (contact) => {
+    setRecipient(contact);
+    setRecipientPhone(contact.phoneNumber);
+    setActiveTab('chat');
   };
 
   const logout = () => {
@@ -477,6 +622,16 @@ export default function Home() {
                 >
                   Contacts
                 </button>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    activeTab === 'history'
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  History
+                </button>
               </div>
             </div>
           </div>
@@ -504,15 +659,29 @@ export default function Home() {
               </div>
               
               {recipient && (
-                <div className="mt-3 flex items-center space-x-2">
-                  <span className="text-gray-700 dark:text-gray-300">Connected to:</span>
-                  <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg font-medium">
-                    {recipient.username} ({recipient.phoneNumber})
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-gray-700 dark:text-gray-300">Connected to:</span>
+                    <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg font-medium">
+                      {recipient.username} ({recipient.phoneNumber})
+                    </div>
+                    <div className={`flex items-center ${recipient.status === 'online' ? 'text-green-500' : 'text-gray-500'}`}>
+                      <div className={`w-2 h-2 rounded-full mr-1 ${recipient.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                      <span className="text-xs capitalize">{recipient.status}</span>
+                    </div>
                   </div>
-                  <div className={`flex items-center ${recipient.status === 'online' ? 'text-green-500' : 'text-gray-500'}`}>
-                    <div className={`w-2 h-2 rounded-full mr-1 ${recipient.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                    <span className="text-xs capitalize">{recipient.status}</span>
-                  </div>
+                  
+                  {!isContactSaved(recipient.phoneNumber) && (
+                    <button
+                      onClick={() => saveContact(recipient)}
+                      className="text-sm bg-blue-500 text-white px-3 py-1 rounded-full hover:bg-blue-600 transition flex items-center space-x-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                      <span>Save Contact</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -649,14 +818,17 @@ export default function Home() {
               </div>
             )}
           </>
-        ) : (
+        ) : activeTab === 'contacts' ? (
           <>
             {/* Contacts List */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-6">
-              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                   Contacts ({users.length})
                 </h2>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {savedContacts.length} saved
+                </div>
               </div>
               
               <div className="overflow-y-auto max-h-96">
@@ -684,16 +856,94 @@ export default function Home() {
                               <p className="text-sm text-gray-500 dark:text-gray-400">{contact.phoneNumber}</p>
                             </div>
                           </div>
-                          <button
-                            onClick={() => {
-                              setRecipient(contact);
-                              setRecipientPhone(contact.phoneNumber);
-                              setActiveTab('chat');
-                            }}
-                            className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
-                          >
-                            Chat
-                          </button>
+                          <div className="flex space-x-2">
+                            {isContactSaved(contact.phoneNumber) ? (
+                              <button
+                                onClick={() => removeSavedContact(
+                                  savedContacts.find(c => c.phoneNumber === contact.phoneNumber)?.id
+                                )}
+                                className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
+                                title="Remove contact"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => saveContact(contact)}
+                                className="text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition"
+                                title="Save contact"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setRecipient(contact);
+                                setRecipientPhone(contact.phoneNumber);
+                                setActiveTab('chat');
+                              }}
+                              className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
+                            >
+                              Chat
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Chat History */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-6">
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                  Chat History ({chatHistory.length})
+                </h2>
+              </div>
+              
+              <div className="overflow-y-auto max-h-96">
+                {chatHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-center">No chat history found</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {chatHistory.map((history) => (
+                      <div 
+                        key={history.id} 
+                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition cursor-pointer"
+                        onClick={() => openChatFromHistory(history)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
+                              {history.username.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{history.username}</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{history.phoneNumber}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{history.lastMessage}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {formatDate(history.lastMessageTime)}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatTime(history.lastMessageTime)}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
