@@ -19,7 +19,7 @@ export default function StoriesPage() {
   const [uploading, setUploading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null); // Tambahkan state untuk menyimpan file yang dipilih
+  const [selectedFile, setSelectedFile] = useState(null); // Store the selected file
   const [alert, setAlert] = useState({ type: '', message: '' });
   
   const fileInputRef = useRef(null);
@@ -198,7 +198,7 @@ export default function StoriesPage() {
       return;
     }
     
-    // Store the selected file in state
+    // Store the selected file
     setSelectedFile(file);
     
     // Create preview
@@ -220,10 +220,17 @@ export default function StoriesPage() {
       
       console.log('Uploading file to catbox.moe...');
       
+      // Add timeout to the fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
+      
       const response = await fetch('https://catbox.moe/user/api.php', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -240,25 +247,27 @@ export default function StoriesPage() {
       return url;
     } catch (error) {
       console.error('Error uploading to catbox:', error);
-      throw error;
+      
+      // Provide more specific error messages
+      if (error.name === 'AbortError') {
+        throw new Error('Upload timed out. Please try again with a smaller file or check your internet connection.');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw error;
+      }
     } finally {
       setUploading(false);
     }
   };
 
   const handleUploadStory = async () => {
-    if (!filePreview || !fileType) {
+    if (!filePreview || !fileType || !selectedFile) {
       showAlert('error', 'Please select a file first');
       return;
     }
     
     try {
-      // Use the selected file from state instead of trying to access the input directly
-      if (!selectedFile) {
-        showAlert('error', 'No file selected');
-        return;
-      }
-      
       console.log('Starting upload process...');
       
       // Upload to catbox.moe
@@ -288,7 +297,7 @@ export default function StoriesPage() {
       showAlert('success', 'Story uploaded successfully');
       setFilePreview(null);
       setFileType(null);
-      setSelectedFile(null); // Reset selected file
+      setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
