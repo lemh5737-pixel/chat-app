@@ -379,26 +379,26 @@ export default function Home() {
 
       {/* Header */}
       <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold">VorChat App</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">VorChat App</h1>
             </div>
             
             <div className="flex flex-wrap gap-2 justify-center">
               <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full">
                 <div className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`}></div>
-                <span className="text-sm font-medium capitalize">{connectionStatus}</span>
+                <span className="text-xs sm:text-sm font-medium capitalize">{connectionStatus}</span>
               </div>
               
               <button
                 onClick={testConnection}
-                className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-sm transition flex items-center space-x-1"
+                className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs sm:text-sm transition flex items-center space-x-1"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -408,7 +408,7 @@ export default function Home() {
               
               <button
                 onClick={logout}
-                className="bg-red-500/80 hover:bg-red-500 px-3 py-1 rounded-full text-sm transition flex items-center space-x-1"
+                className="bg-red-500/80 hover:bg-red-500 px-3 py-1 rounded-full text-xs sm:text-sm transition flex items-center space-x-1"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -421,24 +421,24 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl pb-20">
+      <main className="flex-1 container mx-auto px-4 py-4 sm:py-6 max-w-4xl pb-20">
         {/* User Info */}
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+        <div className="mb-4 sm:mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center">
             <div>
-              <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Your Profile</h2>
-              <div className="flex items-center space-x-4 mt-2">
-                <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-3 py-1 rounded-lg font-medium">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 dark:text-gray-300">Your Profile</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 mt-2">
+                <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-3 py-1 rounded-lg font-medium text-sm sm:text-base">
                   {user.username}
                 </div>
-                <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg font-medium">
+                <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-lg font-medium text-sm sm:text-base">
                   {user.phoneNumber}
                 </div>
               </div>
             </div>
             <button
               onClick={() => router.push('/profile')}
-              className="mt-4 md:mt-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center space-x-1"
+              className="mt-3 sm:mt-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center space-x-1 text-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -449,19 +449,19 @@ export default function Home() {
         </div>
 
         {/* Phone Number Input */}
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
-          <label className="block mb-2 text-gray-700 dark:text-gray-300 font-semibold">Chat Sesama User:</label>
-          <div className="flex space-x-2">
+        <div className="mb-4 sm:mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+          <label className="block mb-2 text-gray-700 dark:text-gray-300 font-semibold text-sm sm:text-base">Chatting Sesama User:</label>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <input
               type="text"
               value={recipientPhone}
               onChange={(e) => setRecipientPhone(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              placeholder="Enter phone number (08xx)"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition text-sm"
+              placeholder="Masukin Nomor User lain(08xx)"
             />
             <button
               onClick={findRecipient}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
             >
               Chat
             </button>
@@ -486,19 +486,19 @@ export default function Home() {
                 <div className="overflow-y-auto max-h-96">
                   {allContacts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 sm:h-12 sm:w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      <p className="text-center">No contacts found</p>
+                      <p className="text-center text-sm sm:text-base">No contacts found</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                       {allContacts.map((contact) => (
-                        <div key={contact.phoneNumber} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
-                          <div className="flex items-center justify-between">
+                        <div key={contact.phoneNumber} className="p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
                             <div className="flex items-center space-x-3">
                               <div className="relative">
-                                <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold text-sm sm:text-base">
                                   {contact.username.charAt(0).toUpperCase()}
                                 </div>
                                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${contact.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}></div>
@@ -509,11 +509,11 @@ export default function Home() {
                                   </div>
                                 )}
                               </div>
-                              <div>
-                                <h3 className="font-medium text-gray-900 dark:text-white">{contact.username}</h3>
+                              <div className="min-w-0">
+                                <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base truncate">{contact.username}</h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{contact.phoneNumber}</p>
                                 {contact.lastMessage && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-xs">
                                     {contact.lastMessage}
                                   </p>
                                 )}
@@ -571,28 +571,30 @@ export default function Home() {
                 <div className="overflow-y-auto max-h-96">
                   {chatHistory.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 sm:h-12 sm:w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-center">No chat history found</p>
+                      <p className="text-center text-sm sm:text-base">No chat history found</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                       {chatHistory.map((history) => (
                         <div 
                           key={history.id} 
-                          className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition cursor-pointer"
+                          className="p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition cursor-pointer"
                           onClick={() => openChatFromHistory(history)}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold text-sm sm:text-base">
                                 {history.username.charAt(0).toUpperCase()}
                               </div>
-                              <div>
-                                <h3 className="font-medium text-gray-900 dark:text-white">{history.username}</h3>
+                              <div className="min-w-0">
+                                <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base truncate">{history.username}</h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{history.phoneNumber}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{history.lastMessage}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-xs">
+                                  {history.lastMessage}
+                                </p>
                               </div>
                             </div>
                             <div className="text-right">
@@ -615,7 +617,7 @@ export default function Home() {
         </div>
 
         {/* Info Panels */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Database Info */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
             <h3 className="font-bold text-lg mb-3 text-gray-700 dark:text-gray-300 flex items-center">
@@ -625,7 +627,7 @@ export default function Home() {
               Database Status
             </h3>
             {databaseInfo ? (
-              <div className="space-y-2">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <span className={databaseInfo.status === 'connected' ? 'text-green-500 font-medium' : 'text-red-500 font-medium'}>
@@ -652,7 +654,7 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400">Loading database info...</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Loading database info...</p>
             )}
           </div>
 
@@ -671,16 +673,16 @@ export default function Home() {
               </div>
               <div className="flex justify-between">
                 <span>Username:</span>
-                <span className="truncate max-w-[120px]">{user.username}</span>
+                <span className="truncate max-w-[100px] sm:max-w-[120px]">{user.username}</span>
               </div>
               <div className="flex justify-between">
                 <span>Phone:</span>
-                <span className="truncate max-w-[120px]">{user.phoneNumber}</span>
+                <span className="truncate max-w-[100px] sm:max-w-[120px]">{user.phoneNumber}</span>
               </div>
               {error && (
                 <div className="flex justify-between">
                   <span>Error:</span>
-                  <span className="text-red-500 truncate max-w-[150px]">{error}</span>
+                  <span className="text-red-500 truncate max-w-[120px] sm:max-w-[150px]">{error}</span>
                 </div>
               )}
             </div>
@@ -694,13 +696,13 @@ export default function Home() {
           <div className="flex justify-around">
             <button
               onClick={() => setActiveTab('contacts')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 activeTab === 'contacts'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               <span className="text-xs mt-1">Contacts</span>
@@ -708,13 +710,13 @@ export default function Home() {
             
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 activeTab === 'history'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="text-xs mt-1">History</span>
@@ -723,13 +725,13 @@ export default function Home() {
             {/* Tombol navigasi ke halaman komunitas */}
             <button
               onClick={() => router.push('/community')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 router.pathname === '/community'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               <span className="text-xs mt-1">Community</span>
@@ -737,13 +739,13 @@ export default function Home() {
             
             <button
               onClick={() => router.push('/profile')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 router.pathname === '/profile'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <span className="text-xs mt-1">Profile</span>
@@ -753,7 +755,7 @@ export default function Home() {
       </nav>
 
       {/* Footer */}
-      <footer className="mt-8 py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+      <footer className="mt-8 py-4 text-center text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
         <p> VorChat App • Credit by Vortex Vipers </p>
       </footer>
     </div>
