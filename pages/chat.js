@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { ref, onValue, serverTimestamp, set, remove, update, get, push } from 'firebase/database';
 import { database } from '../lib/firebase';
 import { getUserByPhone, updateUserStatus } from '../lib/auth';
+import { cleanupOldMessages } from '../lib/messageCleanup';
 import CustomAlert from '../components/CustomAlert';
 
 export default function ChatPage() {
@@ -408,6 +409,25 @@ export default function ChatPage() {
     });
   };
 
+  // Handle manual cleanup of old messages
+  const handleManualCleanup = async () => {
+    showConfirm('Are you sure you want to delete all messages older than 24 hours?', async () => {
+      try {
+        const result = await cleanupOldMessages();
+        if (result.success) {
+          showAlert('success', `Successfully deleted ${result.deletedCount} old messages`);
+        } else {
+          showAlert('error', `Failed to clean up messages: ${result.error}`);
+        }
+        setConfirmData(null);
+      } catch (error) {
+        console.error("Error during manual cleanup:", error);
+        showAlert('error', `Error: ${error.message}`);
+        setConfirmData(null);
+      }
+    });
+  };
+
   const goBack = () => {
     router.push('/');
   };
@@ -519,6 +539,15 @@ export default function ChatPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 <span>Clear</span>
+              </button>
+              <button
+                onClick={handleManualCleanup}
+                className="text-xs sm:text-sm bg-orange-500/80 hover:bg-orange-500 px-3 py-1 rounded-full text-white transition flex items-center space-x-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Cleanup Old</span>
               </button>
             </div>
           </div>
