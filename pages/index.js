@@ -387,7 +387,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold">Chat App</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">VorChat App</h1>
             </div>
             
             <div className="flex flex-wrap gap-2 justify-center">
@@ -450,7 +450,7 @@ export default function Home() {
 
         {/* Phone Number Input */}
         <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
-          <label className="block mb-2 text-gray-700 dark:text-gray-300 font-semibold">Start a new chat:</label>
+          <label className="block mb-2 text-gray-700 dark:text-gray-300 font-semibold">Chat Sesama User:</label>
           <div className="flex space-x-2">
             <input
               type="text"
