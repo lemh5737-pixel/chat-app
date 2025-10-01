@@ -78,8 +78,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white text-center">
-            <h1 className="text-3xl font-bold mb-2">Chat App</h1>
-            <p className="text-indigo-200">Connect with random phone numbers</p>
+            <h1 className="text-3xl font-bold mb-2">VorChat App</h1>
+            <p className="text-indigo-200">Login Untuk mendapatkan Nomor acak</p>
           </div>
           
           <div className="p-8">
@@ -181,7 +181,7 @@ export default function LoginPage() {
         </div>
         
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>By using this app, you agree to our Terms and Privacy Policy</p>
+          <p>By Vortex Vipers • Chat Pakai Nomor acak sesama pengguna </p>
         </div>
       </div>
     </div>
