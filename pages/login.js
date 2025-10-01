@@ -117,7 +117,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter your username"
+                  placeholder="Masukkan nama pengguna"
                   required
                 />
               </div>
@@ -132,7 +132,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter your password"
+                  placeholder="Masukkan kata sandi Anda"
                   required
                 />
               </div>
@@ -160,7 +160,7 @@ export default function LoginPage() {
             
             <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
               <p>
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                {isLogin ? "Tidak punya akun? " : "Sudah punya akun? "}
                 <button
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
