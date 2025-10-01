@@ -1,5 +1,6 @@
 import '../styles/globals.css'
 import { useState, useEffect } from 'react';
+import { scheduleMessageCleanup } from '../lib/messageCleanup';
 
 function MyApp({ Component, pageProps }) {
   const [darkMode, setDarkMode] = useState(false);
@@ -13,6 +14,9 @@ function MyApp({ Component, pageProps }) {
       (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
     setDarkMode(isDarkMode);
+    
+    // Jadwalkan pembersihan pesan
+    scheduleMessageCleanup();
   }, []);
 
   useEffect(() => {
