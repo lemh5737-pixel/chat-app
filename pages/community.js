@@ -1,4 +1,3 @@
-pages/community.js
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ref, onValue, serverTimestamp, set, push, update, get } from 'firebase/database';
