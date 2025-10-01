@@ -1,8 +1,9 @@
+pages/community.js
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ref, onValue, serverTimestamp, set, push, update, get } from 'firebase/database';
 import { database } from '../lib/firebase';
-import { getCommunityGroup, updateUserStatus } from '../lib/auth';
+import { getCommunityGroup, updateUserStatus, getUserByPhone } from '../lib/auth';
 import CustomAlert from '../components/CustomAlert';
 
 export default function CommunityPage() {
@@ -16,6 +17,7 @@ export default function CommunityPage() {
   const [lastMessageTime, setLastMessageTime] = useState(0);
   const [cooldownTime, setCooldownTime] = useState(0);
   const [members, setMembers] = useState([]);
+  const [userPhoneNumbers, setUserPhoneNumbers] = useState({}); // Store user phone numbers
   const messagesEndRef = useRef(null);
 
   const [alert, setAlert] = useState({ type: '', message: '' });
@@ -82,20 +84,74 @@ export default function CommunityPage() {
               ...group.members[username]
             }));
             setMembers(membersList);
+            
+            // Get phone numbers for all members
+            const phoneNumbers = {};
+            for (const member of membersList) {
+              try {
+                const userRef = ref(database, `users/${member.username}`);
+                const userSnapshot = await get(userRef);
+                if (userSnapshot.exists()) {
+                  const userData = userSnapshot.val();
+                  phoneNumbers[member.username] = userData.phoneNumber || '';
+                }
+              } catch (error) {
+                console.error(`Error getting phone number for ${member.username}:`, error);
+              }
+            }
+            setUserPhoneNumbers(phoneNumbers);
           }
         } else {
-          showAlert('error', 'Community group not found');
-          router.push('/');
+          // If group doesn't exist, create it
+          const communityGroupId = "komunitas_user_vorgroup";
+          const groupRef = ref(database, `groups/${communityGroupId}`);
+          
+          await set(groupRef, {
+            id: communityGroupId,
+            name: "Komunitas User Vorgroup",
+            description: "Grup komunitas untuk semua pengguna Vorgroup",
+            createdAt: Date.now(),
+            createdBy: "system",
+            members: {}
+          });
+          
+          // Add current user to the group
+          const memberRef = ref(database, `groups/${communityGroupId}/members/${user.username}`);
+          await set(memberRef, {
+            username: user.username,
+            joinedAt: Date.now(),
+            role: "member"
+          });
+          
+          // Get current user's phone number
+          const currentUserRef = ref(database, `users/${user.username}`);
+          const currentUserSnapshot = await get(currentUserRef);
+          let phoneNumber = '';
+          if (currentUserSnapshot.exists()) {
+            const userData = currentUserSnapshot.val();
+            phoneNumber = userData.phoneNumber || '';
+          }
+          
+          // Fetch the group again
+          const newGroup = await getCommunityGroup();
+          setCommunityGroup(newGroup);
+          setMembers([{
+            username: user.username,
+            joinedAt: Date.now(),
+            role: "member"
+          }]);
+          setUserPhoneNumbers({
+            [user.username]: phoneNumber
+          });
         }
       } catch (error) {
         console.error("Error fetching community group:", error);
         showAlert('error', `Error: ${error.message}`);
-        router.push('/');
       }
     };
     
     fetchCommunityGroup();
-  }, [isClient, user, router]);
+  }, [isClient, user, database]);
 
   // Check connection status
   useEffect(() => {
@@ -225,6 +281,27 @@ export default function CommunityPage() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Format phone number to show only first 3 digits and last 3 digits
+  const formatPhoneNumber = (phoneNumber) => {
+    if (!phoneNumber || phoneNumber.length < 6) return phoneNumber;
+    return `${phoneNumber.substring(0, 3)}******${phoneNumber.substring(phoneNumber.length - 3)}`;
+  };
+
+  // Start a private chat with a user
+  const startPrivateChat = async (username) => {
+    try {
+      const phoneNumber = userPhoneNumbers[username];
+      if (phoneNumber) {
+        router.push(`/chat?recipientPhone=${phoneNumber}`);
+      } else {
+        showAlert('error', 'Phone number not found for this user');
+      }
+    } catch (error) {
+      console.error("Error starting private chat:", error);
+      showAlert('error', `Error: ${error.message}`);
+    }
+  };
+
   const goBack = () => {
     router.push('/');
   };
@@ -339,20 +416,57 @@ export default function CommunityPage() {
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-bl-none'
                       } relative`}
                     >
-                      <div className="font-medium text-xs mb-1 opacity-80">
-                        {message.sender !== user.username && `${message.sender}`}
-                      </div>
-                      <div className="whitespace-pre-wrap break-words">
-                        {message.deleted ? message.text : message.text}
-                      </div>
-                      <div
-                        className={`text-xs mt-1 flex justify-end ${
+                      {/* User info with phone number */}
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center">
+                          <span className={`text-xs font-medium ${
+                            message.sender === user.username
+                              ? 'text-indigo-200'
+                              : 'text-gray-600 dark:text-gray-300'
+                          }`}>
+                            {message.sender}
+                          </span>
+                          {userPhoneNumbers[message.sender] && (
+                            <>
+                              <span className={`mx-1 ${
+                                message.sender === user.username
+                                  ? 'text-indigo-200'
+                                  : 'text-gray-600 dark:text-gray-300'
+                              }`}>
+                                •
+                              </span>
+                              <span 
+                                className={`text-xs font-medium cursor-pointer hover:underline ${
+                                  message.sender === user.username
+                                    ? 'text-indigo-200'
+                                    : 'text-indigo-600 dark:text-indigo-400'
+                                }`}
+                                onClick={() => startPrivateChat(message.sender)}
+                                title="Start private chat"
+                              >
+                                {formatPhoneNumber(userPhoneNumbers[message.sender])}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        
+                        {/* Time stamp */}
+                        <span className={`text-xs ${
                           message.sender === user.username
                             ? 'text-indigo-200'
                             : 'text-gray-500 dark:text-gray-400'
-                        }`}
-                      >
-                        <span>{formatTime(message.timestamp)}</span>
+                        }`}>
+                          {formatTime(message.timestamp)}
+                        </span>
+                      </div>
+                      
+                      {/* Message content with different styling */}
+                      <div className={`whitespace-pre-wrap break-words ${
+                        message.sender === user.username
+                          ? 'text-white font-medium'
+                          : 'text-gray-800 dark:text-gray-100'
+                      }`}>
+                        {message.deleted ? message.text : message.text}
                       </div>
                     </div>
                   </div>
@@ -430,8 +544,25 @@ export default function CommunityPage() {
                         <div>
                           <h3 className="font-medium text-gray-900 dark:text-white">{member.username}</h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{member.role}</p>
+                          {userPhoneNumbers[member.username] && (
+                            <p 
+                              className="text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline"
+                              onClick={() => startPrivateChat(member.username)}
+                            >
+                              {formatPhoneNumber(userPhoneNumbers[member.username])}
+                            </p>
+                          )}
                         </div>
                       </div>
+                      <button
+                        onClick={() => startPrivateChat(member.username)}
+                        className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
+                        title="Start private chat"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 ))}
