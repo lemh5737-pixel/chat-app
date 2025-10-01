@@ -355,68 +355,68 @@ export default function CommunityPage() {
 
       {/* Header */}
       <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
             <div className="flex items-center space-x-3">
               <button
                 onClick={goBack}
                 className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
               </button>
               <div className="bg-white/20 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold">{communityGroup.name}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold truncate max-w-xs">{communityGroup.name}</h1>
             </div>
             
             <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full">
               <div className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`}></div>
-              <span className="text-sm font-medium capitalize">{connectionStatus}</span>
-              <span className="text-sm font-medium">{members.length} members</span>
+              <span className="text-xs sm:text-sm font-medium capitalize">{connectionStatus}</span>
+              <span className="text-xs sm:text-sm font-medium">{members.length} members</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6 max-w-4xl pb-20">
+      <main className="flex-1 container mx-auto px-4 py-4 sm:py-6 max-w-4xl pb-20">
         {/* Group Info */}
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
-          <p className="text-gray-700 dark:text-gray-300">{communityGroup.description}</p>
+        <div className="mb-4 sm:mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+          <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{communityGroup.description}</p>
         </div>
 
         {/* Chat Container */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-4 sm:mb-6">
           {/* Messages Area */}
-          <div className="h-80 md:h-96 overflow-y-auto p-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
+          <div className="h-64 sm:h-80 md:h-96 overflow-y-auto p-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 sm:h-12 sm:w-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <p className="text-center">No messages yet. Start a conversation!</p>
+                <p className="text-center text-sm sm:text-base">No messages yet. Start a conversation!</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.sender === user.username ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-xs md:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
+                      className={`max-w-[85%] sm:max-w-xs md:max-w-md px-3 sm:px-4 py-2 sm:py-3 rounded-2xl shadow-sm ${
                         message.sender === user.username
                           ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-br-none'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-bl-none'
                       } relative`}
                     >
                       {/* User info with phone number */}
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
                         <div className="flex items-center">
                           <span className={`text-xs font-medium ${
                             message.sender === user.username
@@ -460,7 +460,7 @@ export default function CommunityPage() {
                       </div>
                       
                       {/* Message content with different styling */}
-                      <div className={`whitespace-pre-wrap break-words ${
+                      <div className={`whitespace-pre-wrap break-words text-sm sm:text-base ${
                         message.sender === user.username
                           ? 'text-white font-medium'
                           : 'text-gray-800 dark:text-gray-100'
@@ -478,7 +478,7 @@ export default function CommunityPage() {
           {/* Message Input */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <form onSubmit={handleSendMessage}>
-              <div className="mb-2 flex justify-between text-sm text-gray-500 dark:text-gray-400">
+              <div className="mb-2 flex justify-between text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                 <div>
                   {newMessage.length}/{MAX_MESSAGE_LENGTH} characters
                 </div>
@@ -494,13 +494,13 @@ export default function CommunityPage() {
                     onChange={handleMessageChange}
                     placeholder="Type your message here..."
                     rows={2}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none transition pr-20"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none transition pr-20 sm:pr-24 text-sm"
                   />
                   <div className="absolute right-2 bottom-2">
                     <button
                       type="submit"
                       disabled={cooldownTime > 0 || newMessage.trim() === ''}
-                      className={`px-4 py-2 rounded-lg font-medium ${
+                      className={`px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-medium text-sm ${
                         cooldownTime > 0 || newMessage.trim() === ''
                           ? 'bg-gray-400 cursor-not-allowed'
                           : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition shadow-md'
@@ -529,20 +529,20 @@ export default function CommunityPage() {
           <div className="overflow-y-auto max-h-60">
             {members.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 py-8">
-                <p className="text-center">No members found</p>
+                <p className="text-center text-sm sm:text-base">No members found</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {members.map((member) => (
-                  <div key={member.username} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                  <div key={member.username} className="p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-800 dark:text-indigo-200 font-bold text-sm sm:text-base">
                           {member.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">{member.username}</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{member.role}</p>
+                          <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base truncate max-w-[120px] sm:max-w-xs">{member.username}</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 capitalize">{member.role}</p>
                           {userPhoneNumbers[member.username] && (
                             <p 
                               className="text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline"
@@ -555,10 +555,10 @@ export default function CommunityPage() {
                       </div>
                       <button
                         onClick={() => startPrivateChat(member.username)}
-                        className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
+                        className="px-2 sm:px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs sm:text-sm hover:bg-indigo-700 transition"
                         title="Start private chat"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </button>
@@ -577,13 +577,13 @@ export default function CommunityPage() {
           <div className="flex justify-around">
             <button
               onClick={() => router.push('/')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 router.pathname === '/'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
               <span className="text-xs mt-1">Chats</span>
@@ -591,13 +591,13 @@ export default function CommunityPage() {
             
             <button
               onClick={() => router.push('/community')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 router.pathname === '/community'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               <span className="text-xs mt-1">Community</span>
@@ -605,13 +605,13 @@ export default function CommunityPage() {
             
             <button
               onClick={() => router.push('/profile')}
-              className={`flex flex-col items-center justify-center py-3 px-6 ${
+              className={`flex flex-col items-center justify-center py-2 sm:py-3 px-4 sm:px-6 ${
                 router.pathname === '/profile'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <span className="text-xs mt-1">Profile</span>
