@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { ref, push, onValue, serverTimestamp, set, remove, get, child, update } from 'firebase/database';
 import { database } from '../lib/firebase';
 import { getUserByPhone, getAllUsers, updateUserStatus } from '../lib/auth';
+import { cleanupOldMessages } from '../lib/messageCleanup';
 import CustomAlert from '../components/CustomAlert';
 
 export default function Home() {
@@ -283,6 +284,25 @@ export default function Home() {
     router.push(`/chat?recipientPhone=${contact.phoneNumber}`);
   };
 
+  // Handle manual cleanup of old messages
+  const handleManualCleanup = async () => {
+    showConfirm('Are you sure you want to delete all messages older than 24 hours?', async () => {
+      try {
+        const result = await cleanupOldMessages();
+        if (result.success) {
+          showAlert('success', `Successfully deleted ${result.deletedCount} old messages`);
+        } else {
+          showAlert('error', `Failed to clean up messages: ${result.error}`);
+        }
+        setConfirmData(null);
+      } catch (error) {
+        console.error("Error during manual cleanup:", error);
+        showAlert('error', `Error: ${error.message}`);
+        setConfirmData(null);
+      }
+    });
+  };
+
   const logout = () => {
     showConfirm('Are you sure you want to logout?', () => {
       if (user) {
@@ -404,6 +424,16 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>Test</span>
+              </button>
+              
+              <button
+                onClick={handleManualCleanup}
+                className="bg-orange-500/80 hover:bg-orange-500 px-3 py-1 rounded-full text-xs sm:text-sm transition flex items-center space-x-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Cleanup</span>
               </button>
               
               <button
@@ -658,33 +688,30 @@ export default function Home() {
             )}
           </div>
 
-          {/* Connection Info */}
+          {/* System Information */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
             <h3 className="font-bold text-lg mb-3 text-gray-700 dark:text-gray-300 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Connection Info
+              System Information
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Connection:</span>
-                <span className="capitalize">{connectionStatus}</span>
+                <span>Auto-cleanup:</span>
+                <span className="text-green-500 font-medium">Enabled</span>
               </div>
               <div className="flex justify-between">
-                <span>Username:</span>
-                <span className="truncate max-w-[100px] sm:max-w-[120px]">{user.username}</span>
+                <span>Cleanup interval:</span>
+                <span>24 hours</span>
               </div>
               <div className="flex justify-between">
-                <span>Phone:</span>
-                <span className="truncate max-w-[100px] sm:max-w-[120px]">{user.phoneNumber}</span>
+                <span>Message retention:</span>
+                <span>24 hours</span>
               </div>
-              {error && (
-                <div className="flex justify-between">
-                  <span>Error:</span>
-                  <span className="text-red-500 truncate max-w-[120px] sm:max-w-[150px]">{error}</span>
-                </div>
-              )}
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Messages are automatically deleted after 24 hours to save storage space.
+              </div>
             </div>
           </div>
         </div>
